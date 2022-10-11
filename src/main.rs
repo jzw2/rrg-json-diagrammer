@@ -63,14 +63,12 @@ struct Phon {
 
 fn make_graph(phons: Vec<Phon>) -> Graph {
 
-    let id = id!("identity");
-    //let p = NodeId();
     let mut graph = graph!(id!("id"); node!("SentenceTop"),
                            node!("ClauseTop"),
                            node!("CoreTop"),
                            node!("NucTop"),
                            node!("PredTop"),
-edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop"))
+edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop"); attr!("weight", "10"))
     );
 
 
