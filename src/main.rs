@@ -54,6 +54,11 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
 edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop"))
     );
 
+
+
+
+
+
     for (index, p) in phons.iter().enumerate() {
         graph.add_stmt(Stmt::Node(node!(index.to_string(); attr!("label", esc p.phon))));
         if let Some(t) = &p.top {
@@ -64,6 +69,15 @@ edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") =>
         }
     }
 
+    let num_phons = phons.len();
+
+    let edges: Vec<_> = (0..num_phons).map(|x| Vertex::from(node_id!(x))).collect();
+
+    let edge_stmt = Edge{ ty: EdgeTy::Chain(edges), attributes: vec![attr!("style", "invis")] };
+
+    let words: Subgraph = subgraph!("words"; attr!("rank", "same"), edge_stmt);
+
+    graph.add_stmt(words.into());
     let x = graph.print(&mut PrinterContext::default());
     println!("{}",x );
 
@@ -122,7 +136,7 @@ return graph;
 
     },
     {
-        "phon" : "be",
+        "phon" : "leaving",
         "top" :
                 {
                     "pos" : "V",
