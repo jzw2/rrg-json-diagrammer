@@ -7,7 +7,7 @@ use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::printer::{PrinterContext,DotPrinter};
 use graphviz_rust::attributes::*;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 enum Kind {
     Pred,
     Nuc,
@@ -19,10 +19,28 @@ enum Kind {
 
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct Top {
      pos: String,
      kind: Kind,
+}
+
+impl Top {
+    fn make_edge(&self, node: usize) -> Stmt {
+
+        let pos_node = node_id!(self.pos.clone() + &node.to_string() );
+        // let pos_node = node_id!(node.to_string() + &self.pos);
+        let edge  = match self.kind {
+            Kind::Pred => edge!(node_id!(node) => pos_node => node_id!("PredTop")),
+            Kind::Nuc => edge!(node_id!(node) => pos_node => node_id!("NucTop")),
+            Kind::Core => edge!(node_id!(node) => pos_node => node_id!("CoreTop")),
+            Kind::CoreP => edge!(node_id!(node) => pos_node => node_id!("PredTop")),// not correct
+            Kind::Clause => edge!(node_id!(node) => pos_node => node_id!("ClauseTop")),
+            Kind::ClauseP => edge!(node_id!(node) => pos_node => node_id!("PredTop")),  // not correct
+            Kind::Sentence => edge!(node_id!(node) => pos_node => node_id!("SentenceTop"))
+        };
+        edge.into()
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -51,7 +69,8 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
                            node!("ClauseTop"),
                            node!("CoreTop"),
                            node!("NucTop"),
-edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop"))
+                           node!("PredTop"),
+edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop"))
     );
 
 
@@ -62,9 +81,8 @@ edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") =>
     for (index, p) in phons.iter().enumerate() {
         graph.add_stmt(Stmt::Node(node!(index.to_string(); attr!("label", esc p.phon))));
         if let Some(t) = &p.top {
-            let pos_name = index.to_string() + "pos";
-            graph.add_stmt(node!(pos_name; attr!("label", esc t.pos)).into());
-            graph.add_stmt(edge!(node_id!(pos_name) => node_id!(index.to_string()) => node_id!("CoreTop")).into());
+            graph.add_stmt(Stmt::Node(node!(t.pos.to_string() + &index.to_string(); attr!("label", esc t.pos))));
+            graph.add_stmt(t.make_edge(index));
 
         }
     }
@@ -72,12 +90,25 @@ edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") =>
     let num_phons = phons.len();
 
     let edges: Vec<_> = (0..num_phons).map(|x| Vertex::from(node_id!(x))).collect();
-
     let edge_stmt = Edge{ ty: EdgeTy::Chain(edges), attributes: vec![attr!("style", "invis")] };
+    let phons_sub: Subgraph = subgraph!("phons"; attr!("rank", "same"), edge_stmt);
 
-    let words: Subgraph = subgraph!("words"; attr!("rank", "same"), edge_stmt);
+    graph.add_stmt(phons_sub.into());
 
-    graph.add_stmt(words.into());
+
+    // let enumer_top  = phons.iter().enumerate().map(|(num, p)| p.top.as_ref().map( |t| Vertex::from(node_id!(t.pos.to_string() + &num.to_string()))));
+
+    // let edges: Vec<_> = enumer_top.filter_map(|t| t).collect();
+    // let edge_stmt = Edge{ ty: EdgeTy::Chain(edges), attributes: vec![attr!("style", "invis")] };
+    //
+    let mut v: Vec<Stmt> = vec![attr!("rank", "same").into()];
+    let stmts  = phons.iter().enumerate().map(|(num, p)| p.top.as_ref().map( |t| node!(t.pos.to_string() + &num.to_string()).into()));
+    let stmts: Vec<_> = stmts.filter_map(|t| t).collect();
+    v.extend(stmts);
+    let pos_sub: Subgraph = subgraph!("all_pos", v);
+
+    graph.add_stmt(pos_sub.into());
+
     let x = graph.print(&mut PrinterContext::default());
     println!("{}",x );
 
