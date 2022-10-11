@@ -31,7 +31,7 @@ impl Top {
         let pos_node = node_id!(self.pos.clone() + &node.to_string() );
         // let pos_node = node_id!(node.to_string() + &self.pos);
         let edge  = match self.kind {
-            Kind::Pred => edge!(node_id!(node) => pos_node => node_id!("PredTop")),
+            Kind::Pred => edge!(node_id!(node) => pos_node => node_id!("PredTop"); attr!("weight", "1")),
             Kind::Nuc => edge!(node_id!(node) => pos_node => node_id!("NucTop")),
             Kind::Core => edge!(node_id!(node) => pos_node => node_id!("CoreTop")),
             Kind::CoreP => edge!(node_id!(node) => pos_node => node_id!("PredTop")),// not correct
@@ -63,28 +63,76 @@ struct Phon {
 
 fn make_graph(phons: Vec<Phon>) -> Graph {
 
-    let mut graph = graph!(id!("id"); node!("SentenceTop"),
-                           node!("ClauseTop"),
-                           node!("CoreTop"),
-                           node!("NucTop"),
-                           node!("PredTop"),
-edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop"); attr!("weight", "10"))
+    let mut graph = graph!(id!("id"); node!("SentenceTop"; attr!("label", "Sentence"), attr!("group", "main")),
+                           node!("ClauseTop"; attr!("label", "Clause"), attr!("group", "main")),
+                           node!("CoreTop";attr!("label", "Core"), attr!("group", "main")),
+                           node!("NucTop"; attr!("label", "Nuc"), attr!("group", "main")),
+                           node!("PredTop"; attr!("label", "Pred"), attr!("group", "main"))
+//edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop") ; attr!("weight", "1"))
     );
 
 
 
 
+    // assume there can only be one
+    let mut pred_index = None;
 
 
+
+
+
+
+    // connecting each element to their pos and then to the vertical bar
     for (index, p) in phons.iter().enumerate() {
-        graph.add_stmt(Stmt::Node(node!(index.to_string(); attr!("label", esc p.phon))));
+        let mut add_main = false;
         if let Some(t) = &p.top {
-            graph.add_stmt(Stmt::Node(node!(t.pos.to_string() + &index.to_string(); attr!("label", esc t.pos))));
-            graph.add_stmt(t.make_edge(index));
+
+            let mut a = vec![attr!("label", esc t.pos)];
+            if let Kind::Pred = &t.kind {
+                pred_index = Some(index);
+                a.push(attr!("group", "main"));
+                add_main = true;
+            } else {
+
+                graph.add_stmt(t.make_edge(index));
+            }
+            // add pos
+            graph.add_stmt(Stmt::Node(node!(t.pos.to_string() + &index.to_string(), a)));
 
         }
+        let mut a = vec![attr!("label", esc p.phon)];
+        if add_main {
+            a.push(attr!("group", "main"));
+        }
+        graph.add_stmt(Stmt::Node(node!(index.to_string(), a)));
     }
 
+
+    // make big ventiacl thing in the middle
+
+    let mut v = vec![
+
+            node_id!("SentenceTop").into(),
+            node_id!("ClauseTop").into(),
+            node_id!("CoreTop").into(),
+            node_id!("NucTop").into(),
+            node_id!("PredTop").into(),
+
+    ];
+
+    let index = pred_index.expect("Fialure didn't put the pred thing in beaucse I didn't miplemnte it yet");
+    v.push(node_id!(phons[index].top.as_ref().unwrap().pos.to_string() + &index.to_string()).into());
+    v.push(node_id!(index.to_string()).into());
+
+
+    //remember to add the bottom stuff here
+    //
+    //
+
+    let big_vert = Edge{ ty: EdgeTy::Chain(v), attributes: vec![] };
+    graph.add_stmt(big_vert.into());
+
+    // make subgraph to make the phon horizontal
     let num_phons = phons.len();
 
     let edges: Vec<_> = (0..num_phons).map(|x| Vertex::from(node_id!(x))).collect();
@@ -99,6 +147,7 @@ edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") =>
     // let edges: Vec<_> = enumer_top.filter_map(|t| t).collect();
     // let edge_stmt = Edge{ ty: EdgeTy::Chain(edges), attributes: vec![attr!("style", "invis")] };
     //
+    // make a subgraph so the pos allign
     let mut v: Vec<Stmt> = vec![attr!("rank", "same").into()];
     let stmts  = phons.iter().enumerate().map(|(num, p)| p.top.as_ref().map( |t| node!(t.pos.to_string() + &num.to_string()).into()));
     let stmts: Vec<_> = stmts.filter_map(|t| t).collect();
