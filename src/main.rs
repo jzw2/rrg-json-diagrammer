@@ -63,11 +63,17 @@ struct Phon {
 
 fn make_graph(phons: Vec<Phon>) -> Graph {
 
-    let mut graph = graph!(id!("id"); node!("SentenceTop"; attr!("label", "Sentence"), attr!("group", "main")),
+    let mut graph = graph!(id!("id");
+                           node!("SentenceTop"; attr!("label", "Sentence"), attr!("group", "main")),
                            node!("ClauseTop"; attr!("label", "Clause"), attr!("group", "main")),
                            node!("CoreTop";attr!("label", "Core"), attr!("group", "main")),
                            node!("NucTop"; attr!("label", "Nuc"), attr!("group", "main")),
-                           node!("PredTop"; attr!("label", "Pred"), attr!("group", "main"))
+                           node!("PredTop"; attr!("label", "Pred"), attr!("group", "main")),
+                           node!("SentenceBot"; attr!("label", "Sentence"), attr!("group", "main")),
+                           node!("ClauseBot"; attr!("label", "Clause"), attr!("group", "main")),
+                           node!("CoreBot";attr!("label", "Core"), attr!("group", "main")),
+                           node!("NucBot"; attr!("label", "Nuc"), attr!("group", "main")),
+                           node!("PredBot"; attr!("label", "Pred"), attr!("group", "main"))
 //edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop") ; attr!("weight", "1"))
     );
 
@@ -76,11 +82,6 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
 
     // assume there can only be one
     let mut pred_index = None;
-
-
-
-
-
 
     // connecting each element to their pos and then to the vertical bar
     for (index, p) in phons.iter().enumerate() {
@@ -92,6 +93,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
                 pred_index = Some(index);
                 a.push(attr!("group", "main"));
                 add_main = true;
+                graph.add_stmt(node!(t.pos.to_string() + "Bot"; attr!("label", "invis")).into())
             } else {
 
                 graph.add_stmt(t.make_edge(index));
@@ -121,13 +123,23 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
     ];
 
     let index = pred_index.expect("Fialure didn't put the pred thing in beaucse I didn't miplemnte it yet");
-    v.push(node_id!(phons[index].top.as_ref().unwrap().pos.to_string() + &index.to_string()).into());
+    let pos = phons[index].top.as_ref().unwrap().pos.to_string();
+    v.push(node_id!(pos.to_string()+ &index.to_string()).into());
     v.push(node_id!(index.to_string()).into());
+    v.push(node_id!(pos.to_string() + "Bot").into());
 
+    let v_bot = vec![
+
+            node_id!("PredBot").into(),
+            node_id!("NucBot").into(),
+            node_id!("CoreBot").into(),
+            node_id!("ClauseBot").into(),
+            node_id!("SentenceBot").into(),
+
+    ];
+    v.extend(v_bot);
 
     //remember to add the bottom stuff here
-    //
-    //
 
     let big_vert = Edge{ ty: EdgeTy::Chain(v), attributes: vec![] };
     graph.add_stmt(big_vert.into());
