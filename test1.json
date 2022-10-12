@@ -1,0 +1,51 @@
+[
+    {
+    "phon" : "what",
+    "top" : {
+        "pos": "NP",
+        "kind": "Clause"
+        }
+    },
+    {
+    "phon" : "did"
+},
+    {
+    "phon" : "Robin",
+    "top" : {
+        "pos" : "NP",
+        "kind" : "Core"
+    }
+
+},
+    {
+    "phon" : "show",
+    "top" : {
+        "pos" : "V",
+        "kind": "Pred"
+    }
+},
+    {
+    "phon" : "to Pat",
+    "top" : {
+        "pos" : "PP",
+        "kind": "Core"
+    }
+},
+    {
+    "phon" : "in the library",
+    "top" :
+    {
+        "pos" : "PP",
+        "kind": "CoreP"
+    }
+},
+    {
+    "phon" : "yesterday",
+    "top" :
+    {
+        "pos" : "ADV",
+        "kind": "CoreP"
+    }
+}
+
+]

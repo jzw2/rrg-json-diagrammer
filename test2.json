@@ -1,0 +1,64 @@
+[
+    {
+        "phon" : "Will",
+        "bot" : [
+
+            {
+                "op" : "IF",
+                "kind": "Clause"
+            },
+            {
+                "op" : "TNS",
+                "kind": "Clause"
+            }
+        ]
+
+    },
+    {
+    "phon" : "they",
+    "top" :
+            {
+                "pos" : "NP",
+                "kind": "Core"
+            }
+    },
+    {
+        "phon" : "have to",
+        "bot" : [
+
+            {
+                "op" : "MOD",
+                "kind": "Core"
+            }
+        ]
+
+    },
+    {
+        "phon" : "be",
+        "bot" : [
+
+            {
+                "op" : "ASP",
+                "kind": "Nuc"
+            }
+        ]
+
+    },
+    {
+        "phon" : "leaving",
+        "top" :
+                {
+                    "pos" : "V",
+                    "kind": "Pred"
+                },
+        "bot" : [
+
+            {
+                "op" : "ASP",
+                "kind": "Nuc"
+            }
+        ]
+
+    }
+
+]
