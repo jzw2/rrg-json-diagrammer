@@ -230,27 +230,16 @@ return graph;
 
 }
 
-fn draw_stuff() {
-
-
-
- let mut g2 = make_graph(serde_json::from_str(T2).unwrap());
-
-       let graph_svg = exec(g2, &mut PrinterContext::default(), vec![
-           CommandArg::Format(Format::Svg),
-            CommandArg::Output("test2.svg".to_string())
-       ]).unwrap();
-
-    println!("{}", graph_svg);
-}
 
 fn main() {
     //untyped_example();
     let input_file =  env::args().nth(1).expect("Did not provide input file");
-    let output_file =  env::args().nth(1).expect("Did not provide output file");
+    let output_file =  env::args().nth(2).expect("Did not provide output file");
 
-    let json_contenst = read_to_string(input_file).expect(&format!("Error in reading file {}", input_file));
-    let mut g = make_graph(serde_json::from_str(&input_file).expect("You messed up the Json format"));
+    let error = format!("Error in reading file {}", input_file);
+
+    let json_content = read_to_string(input_file).expect(&error);
+    let mut g = make_graph(serde_json::from_str(&json_content).expect("You messed up the Json format"));
 
        let graph_svg = exec(g, &mut PrinterContext::default(), vec![
            CommandArg::Format(Format::Svg),
