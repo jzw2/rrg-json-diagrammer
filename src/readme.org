@@ -15,3 +15,6 @@ The backend works by taking the json and turning it into the =dot= format. To ge
 #+begin_src
 cargo run name_of_json_file.json name_of_output_file.svg
 #+end_src
+
+
+As an example, there are files [[file:~/RRG-JSON/test1.json][test1]]  and [[file:~/RRG-JSON/test2.json][test2]]  for example json projecs.
