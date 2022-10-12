@@ -49,7 +49,7 @@ impl Top {
 
         let pos_node = node_id!(self.pos.clone() + &node.to_string() );
         // let pos_node = node_id!(node.to_string() + &self.pos);
-        let edge = edge!(node_id!(node) => pos_node => node_id!(self.kind.to_string() + "Top"));
+        let edge = edge!(node_id!(node) => pos_node => node_id!(self.kind.to_string() + "Top"); attr!("dir", "none"));
         edge.into()
     }
 }
@@ -74,7 +74,7 @@ struct Phon {
 
 fn make_graph(phons: Vec<Phon>) -> Graph {
 
-    let mut graph = graph!(id!("id");
+    let mut graph = graph!(di id!("id");
                            node!("SentenceTop"; attr!("label", "Sentence"), attr!("group", "main")),
                            node!("ClauseTop"; attr!("label", "Clause"), attr!("group", "main")),
                            node!("CoreTop";attr!("label", "Core"), attr!("group", "main")),
@@ -120,7 +120,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
                 let operator_node_name = format!("{}{}_{}", proj.op, index, op_index);
 
                 graph.add_stmt(node!(operator_node_name; attr!("label", proj.op)).into());
-                graph.add_stmt(edge!(node_id!(index) => node_id!(operator_node_name); attr!("style", "dotted")).into());
+                graph.add_stmt(edge!(node_id!(index) => node_id!(operator_node_name); attr!("style", "dotted"), attr!("dir", "none")).into());
                 let bottom_name = format!("{}Bot", proj.kind.to_string());
                 graph.add_stmt(edge!(node_id!(operator_node_name) => node_id!(bottom_name)).into());
                 let subgr = subgraph!(; attr!("rank", "same"), node!(operator_node_name), node!(bottom_name));
@@ -167,7 +167,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
 
     //remember to add the bottom stuff here
 
-    let big_vert = Edge{ ty: EdgeTy::Chain(v), attributes: vec![] };
+    let big_vert = Edge{ ty: EdgeTy::Chain(v), attributes: vec![attr!("dir", "none")] };
     graph.add_stmt(big_vert.into());
 
     // make subgraph to make the phon horizontal
