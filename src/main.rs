@@ -121,7 +121,10 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
 
                 graph.add_stmt(node!(operator_node_name; attr!("label", proj.op)).into());
                 graph.add_stmt(edge!(node_id!(index) => node_id!(operator_node_name); attr!("style", "dotted")).into());
-                graph.add_stmt(edge!(node_id!(operator_node_name) => node_id!(format!("{}Bot", proj.kind.to_string()))).into());
+                let bottom_name = format!("{}Bot", proj.kind.to_string());
+                graph.add_stmt(edge!(node_id!(operator_node_name) => node_id!(bottom_name)).into());
+                let subgr = subgraph!(; attr!("rank", "same"), node!(operator_node_name), node!(bottom_name));
+                graph.add_stmt(subgr.into());
             }
 
         }
