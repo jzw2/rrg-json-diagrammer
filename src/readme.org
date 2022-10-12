@@ -1,0 +1,17 @@
+#+title: Readme
+
+
+An RRG diagram creator.
+
+
+
+* Dependencies
+To compile the project, you will need =rust= or preferrably =cargo=.
+
+The backend works by taking the json and turning it into the =dot= format. To get an svg, you will need to have =graphviz= installed.
+
+* Running
+
+#+begin_src
+cargo run name_of_json_file.json name_of_output_file.svg
+#+end_src
