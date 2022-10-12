@@ -1,3 +1,7 @@
+
+use std::fmt::Display;
+use std::fmt::format;
+
 use serde_json::{Result, Value};
 use serde::{Deserialize};
 use graphviz_rust::dot_structures::*;
@@ -19,6 +23,21 @@ enum Kind {
 
 }
 
+impl Kind {
+    fn to_string(&self) -> String{
+        let s = match &self {
+            Kind::Pred => "Pred",
+            Kind::Nuc => "Nuc",
+            Kind::Core => "Core",
+            Kind::CoreP => "CoreP",
+            Kind::Clause => "Clause",
+            Kind::ClauseP => "ClauseP",
+            Kind::Sentence => "Sentence",
+        };
+        s.into()
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 struct Top {
      pos: String,
@@ -30,15 +49,7 @@ impl Top {
 
         let pos_node = node_id!(self.pos.clone() + &node.to_string() );
         // let pos_node = node_id!(node.to_string() + &self.pos);
-        let edge  = match self.kind {
-            Kind::Pred => edge!(node_id!(node) => pos_node => node_id!("PredTop"); attr!("weight", "1")),
-            Kind::Nuc => edge!(node_id!(node) => pos_node => node_id!("NucTop")),
-            Kind::Core => edge!(node_id!(node) => pos_node => node_id!("CoreTop")),
-            Kind::CoreP => edge!(node_id!(node) => pos_node => node_id!("PredTop")),// not correct
-            Kind::Clause => edge!(node_id!(node) => pos_node => node_id!("ClauseTop")),
-            Kind::ClauseP => edge!(node_id!(node) => pos_node => node_id!("PredTop")),  // not correct
-            Kind::Sentence => edge!(node_id!(node) => pos_node => node_id!("SentenceTop"))
-        };
+        let edge = edge!(node_id!(node) => pos_node => node_id!(self.kind.to_string() + "Top"));
         edge.into()
     }
 }
@@ -74,7 +85,6 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
                            node!("CoreBot";attr!("label", "Core"), attr!("group", "main")),
                            node!("NucBot"; attr!("label", "Nuc"), attr!("group", "main")),
                            node!("PredBot"; attr!("label", "Pred"), attr!("group", "main"))
-//edge!(node_id!("SentenceTop") => node_id!("ClauseTop") => node_id!("CoreTop") => node_id!("NucTop") => node_id!("PredTop") ; attr!("weight", "1"))
     );
 
 
@@ -90,16 +100,28 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
 
             let mut a = vec![attr!("label", esc t.pos)];
             if let Kind::Pred = &t.kind {
+                //if it's the pred, we need add the thing to the bottom also
                 pred_index = Some(index);
                 a.push(attr!("group", "main"));
                 add_main = true;
-                graph.add_stmt(node!(t.pos.to_string() + "Bot"; attr!("label", "invis")).into())
+                graph.add_stmt(node!(t.pos.to_string() + "Bot"; attr!("label", t.pos), attr!("group", "main")).into())
             } else {
 
                 graph.add_stmt(t.make_edge(index));
             }
             // add pos
             graph.add_stmt(Stmt::Node(node!(t.pos.to_string() + &index.to_string(), a)));
+
+        }
+        if let Some(b) = &p.bot {
+
+            for (op_index, proj) in b.iter().enumerate() {
+                //let n = node!(proj.kind)
+                let operator_node_name = format!("{}{}_{}", proj.op, index, op_index);
+
+                graph.add_stmt(node!(operator_node_name; attr!("label", proj.op)).into());
+                graph.add_stmt(edge!(node_id!(index) => node_id!(operator_node_name) => node_id!(format!("{}Bot", proj.kind.to_string()))).into());
+            }
 
         }
         let mut a = vec![attr!("label", esc p.phon)];
