@@ -36,6 +36,14 @@ impl Kind {
         };
         s.into()
     }
+
+    fn get_per(&self) -> Option<Kind> {
+        match self {
+            Kind::CoreP => Some(Kind::Core),
+            Kind::ClauseP => Some(Kind::Clause),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -49,7 +57,13 @@ impl Top {
 
         let pos_node = node_id!(self.pos.clone() + &node.to_string() );
         // let pos_node = node_id!(node.to_string() + &self.pos);
-        let edge = edge!(node_id!(node) => pos_node => node_id!(self.kind.to_string() + "Top"); attr!("dir", "none"));
+        //
+        let connect_node_string = if let Some(_) = self.kind.get_per() {
+            format!("{}{}Top", self.kind.to_string(), node)
+        } else {
+            format!("{}Top", self.kind.to_string())
+        };
+        let edge = edge!(node_id!(node) => pos_node => node_id!(connect_node_string); attr!("dir", "none"));
         edge.into()
     }
 }
@@ -112,6 +126,17 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
             // add pos
             graph.add_stmt(Stmt::Node(node!(t.pos.to_string() + &index.to_string(), a)));
 
+
+            if let Some(pkind) = t.kind.get_per() {
+                let main_name = format!("{}Top", pkind.to_string());
+                let p_name = format!("{}{}Top", t.kind.to_string(), index);
+                graph.add_stmt(Stmt::Node(node!(p_name; attr!("label", "Periphery"))));
+                graph.add_stmt(edge!(node_id!(p_name) => node_id!(main_name)).into());
+
+                let subgr = subgraph!(; attr!("rank", "same"), node!(main_name), node!(p_name));
+                graph.add_stmt(subgr.into());
+            }
+
         }
         if let Some(b) = &p.bot {
 
@@ -123,7 +148,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
                 graph.add_stmt(edge!(node_id!(index) => node_id!(operator_node_name); attr!("style", "dotted"), attr!("dir", "none")).into());
                 let bottom_name = format!("{}Bot", proj.kind.to_string());
                 graph.add_stmt(edge!(node_id!(operator_node_name) => node_id!(bottom_name)).into());
-                let subgr = subgraph!(; attr!("rank", "same"), node!(operator_node_name), node!(bottom_name));
+                let subgr = subgraph!(; attr!("rank", "same"), node!(bottom_name), node!(operator_node_name));
                 graph.add_stmt(subgr.into());
             }
 
@@ -203,7 +228,7 @@ return graph;
 
 }
 
-    static T1: &str = r#"
+    const T1: &str = r#"
 
 [
     {
@@ -270,6 +295,60 @@ return graph;
 
 ]
 
+"#;
+
+    const T2: &str = r#"
+[
+    {
+    "phon" : "what",
+    "top" : {
+        "pos": "NP",
+        "kind": "Clause"
+        }
+    },
+    {
+    "phon" : "did"
+},
+    {
+    "phon" : "Robin",
+    "top" : {
+        "pos" : "NP",
+        "kind" : "Core"
+    }
+
+},
+    {
+    "phon" : "show",
+    "top" : {
+        "pos" : "V",
+        "kind": "Pred"
+    }
+},
+    {
+    "phon" : "to Pat",
+    "top" : {
+        "pos" : "PP",
+        "kind": "Core"
+    }
+},
+    {
+    "phon" : "in the library",
+    "top" :
+    {
+        "pos" : "PP",
+        "kind": "CoreP"
+    }
+},
+    {
+    "phon" : "yesterday",
+    "top" :
+    {
+        "pos" : "ADV",
+        "kind": "CoreP"
+    }
+}
+
+]
 "#;
 
 fn untyped_example() -> Result<()> {
@@ -517,9 +596,15 @@ fn draw_stuff() {
             CommandArg::Output("test.svg".to_string())
        ]).unwrap();
 
-    println!("making graph");
     println!("{}", graph_svg);
-    println!("making graph");
+ let mut g2 = make_graph(serde_json::from_str(T2).unwrap());
+
+       let graph_svg = exec(g2, &mut PrinterContext::default(), vec![
+           CommandArg::Format(Format::Svg),
+            CommandArg::Output("test2.svg".to_string())
+       ]).unwrap();
+
+    println!("{}", graph_svg);
 }
 
 fn main() {
