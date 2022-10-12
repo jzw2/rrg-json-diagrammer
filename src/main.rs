@@ -1,16 +1,16 @@
 use std::env;
-use std::fmt::format;
-use std::fmt::Display;
+
+
 use std::fs::read_to_string;
 
-use graphviz_rust::attributes::*;
+
 use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
 use graphviz_rust::printer::{DotPrinter, PrinterContext};
-use graphviz_rust::{exec, parse, print};
+use graphviz_rust::{exec};
 use serde::Deserialize;
-use serde_json::{Result, Value};
+
 
 #[derive(Deserialize, Debug, Clone)]
 enum Kind {
@@ -57,7 +57,7 @@ impl Top {
         let pos_node = node_id!(self.pos.clone() + &node.to_string());
         // let pos_node = node_id!(node.to_string() + &self.pos);
         //
-        let connect_node_string = if let Some(_) = self.kind.get_per() {
+        let connect_node_string = if self.kind.get_per().is_some() {
             format!("{}{}Top", self.kind.to_string(), node)
         } else {
             format!("{}Top", self.kind.to_string())
@@ -164,7 +164,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
     let pos = phons[index].top.as_ref().unwrap().pos.to_string();
     v.push(node_id!(pos.to_string() + &index.to_string()).into());
     v.push(node_id!(index.to_string()).into());
-    v.push(node_id!(pos.to_string() + "Bot").into());
+    v.push(node_id!(pos + "Bot").into());
 
     let v_bot = vec![
         node_id!("PredBot").into(),
@@ -207,7 +207,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
             .as_ref()
             .map(|t| node!(t.pos.to_string() + &num.to_string()).into())
     });
-    let stmts: Vec<_> = stmts.filter_map(|t| t).collect();
+    let stmts: Vec<_> = stmts.flatten().collect();
     v.extend(stmts);
     let pos_sub: Subgraph = subgraph!("all_pos", v);
 
@@ -216,7 +216,7 @@ fn make_graph(phons: Vec<Phon>) -> Graph {
     let x = graph.print(&mut PrinterContext::default());
     println!("{}", x);
 
-    return graph;
+    graph
 }
 
 fn main() {
@@ -227,7 +227,7 @@ fn main() {
     let error = format!("Error in reading file {}", input_file);
 
     let json_content = read_to_string(input_file).expect(&error);
-    let mut g =
+    let g =
         make_graph(serde_json::from_str(&json_content).expect("You messed up the Json format"));
 
     let graph_svg = exec(
