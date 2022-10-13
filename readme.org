@@ -3,7 +3,7 @@
 
 An RRG diagram creator.
 
-Read the paper [[file:~/RRG-JSON/paper.pdf][here.]]
+Read the paper [[paper.pdf][here.]]
 
 * Dependencies
 To compile the project, you will need =rustc= or preferrably =cargo=.
